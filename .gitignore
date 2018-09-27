@@ -12,3 +12,4 @@
 *.out
 
 /REST/vendor
+/REST/config.yaml
