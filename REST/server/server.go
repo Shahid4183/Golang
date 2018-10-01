@@ -3,6 +3,8 @@ package server
 import (
 	"net/http"
 
+	"github.com/Shahid4183/Golang/REST/controllers"
+	"github.com/Shahid4183/Golang/REST/routers"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -36,5 +38,12 @@ func New(DB *gorm.DB, logger *lumberjack.Logger) (*Server, error) {
 			},
 		})
 	}
+	// create controllers
+	/* userController */
+	userController := controllers.MakeUserController(DB)
+	// create routers
+	userRouter := routers.User{}.New(userController)
+	// Register routes
+	userRouter.Register(server.Group(""))
 	return &server, nil
 }
