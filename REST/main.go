@@ -24,8 +24,8 @@ func main() {
 		panic(fmt.Errorf("Fatal error getting config from file: %s", err))
 	}
 	logger := lumberjack.Logger{
-		Filename:   config.GetString("logging.directory") + config.GetString("logging.filename"),
-		MaxSize:    config.GetInt("logging.size"), // megabytes
+		Filename:   config.GetString("logger.directory") + config.GetString("logger.filename"),
+		MaxSize:    config.GetInt("logger.size"), // megabytes
 		MaxBackups: 1,
 		MaxAge:     1,    //days
 		Compress:   true, // disabled by default

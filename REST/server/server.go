@@ -2,9 +2,12 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/Shahid4183/Golang/REST/controllers"
+	"github.com/Shahid4183/Golang/REST/models"
 	"github.com/Shahid4183/Golang/REST/routers"
+	"github.com/Shahid4183/Golang/REST/tokens"
 	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -38,12 +41,46 @@ func New(DB *gorm.DB, logger *lumberjack.Logger) (*Server, error) {
 			},
 		})
 	}
+	// create access key for jwt token
+	accessKey, err := tokens.Generate()
+	if err != nil {
+		return nil, err
+	}
+	// middleware to add jwt functinality
+	server.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		Skipper: func(c echo.Context) bool {
+			if strings.HasPrefix(c.Path(), "/auth") {
+				return true
+			} else if strings.HasPrefix(c.Path(), "/welcome") {
+				return true
+			}
+			if strings.HasPrefix(c.Path(), "/public") {
+				return true
+			}
+			return false
+		},
+		Claims:     &models.UserClaims{},
+		SigningKey: []byte(accessKey),
+	}))
+	// generate and set random refresh key
+	if err := tokens.SetAccessTokenKey([]byte(accessKey)); err != nil {
+		return nil, err
+	}
+
+	refreshKey, err := tokens.Generate()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tokens.SetRefreshTokenKey([]byte(refreshKey)); err != nil {
+		return nil, err
+	}
 	// create controllers
 	/* userController */
 	userController := controllers.MakeUserController(DB)
 	// create routers
 	userRouter := routers.User{}.New(userController)
 	// Register routes
-	userRouter.Register(server.Group(""))
+	userRouter.Register(server.Group("auth"))
 	return &server, nil
 }
