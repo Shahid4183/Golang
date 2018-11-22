@@ -22,8 +22,8 @@ type User struct {
 type ReturnedUser struct {
 	Username string `gorm:"max=64" json:"username" validate:"required,max=64"`
 	FullName string `gorm:"max=50" json:"fullname" validate:"required,max=50"`
-	Email    string `json:"email" validate:"required,email"`
-	Mobile   string `gorm:"max=15" json:"mobile" validate:"required,max=15"`
+	Email    string `gorm:"unique" json:"email" validate:"required,email"`
+	Mobile   string `gorm:"max=15,unique" json:"mobile" validate:"required,max=15"`
 }
 
 // UserClaims will hold claim in jwt

@@ -29,6 +29,7 @@ func (User) New(userController interfaces.User) User {
 // All user related routes will be registered here
 func (router User) Register(group *echo.Group) {
 	group.POST("/signup", router.signup)
+	group.POST("/signin", router.signin)
 }
 
 func (router User) getUser(context echo.Context) (*models.User, error) {
@@ -69,10 +70,55 @@ func (router User) signup(context echo.Context) error {
 	user.FullName = request.FullName
 	user.Email = request.Email
 	user.Mobile = request.Mobile
-	user.Password = request.Password
+	pass, err := tokens.Encrypt(request.Password)
+	if err != nil {
+		log.Error(err)
+		return Errors.SomethingWentWrong
+	}
+	user.Password = pass
 	// create new user in database
 	if err := router.userController.CreateUser(user); err != nil {
 		return err
 	}
 	return context.JSON(http.StatusOK, "Registration successfull")
+}
+
+func (router User) signin(context echo.Context) error {
+	// Request body structure
+	type Request struct {
+		Email    string `json:"email" validate:"required"`
+		Password string `json:"password" validate:"required"`
+	}
+	// create request object
+	request := new(Request)
+	// bind request to context
+	// this step takes request body send in api call and binds
+	// request body parameters to request object
+	if err := context.Bind(request); err != nil {
+		log.Error(err)
+		return Errors.InvalidRequest
+	}
+	// do server-side validation
+	if err := validator.New().Struct(request); err != nil {
+		log.Error(err)
+		return Errors.ValidationError
+	}
+	// get current user
+	user, err := router.getUser(context)
+	if err != nil {
+		log.Error(err)
+		return Errors.SomethingWentWrong
+	}
+	// compare emails
+	if request.Email != user.Email {
+		return Errors.WrongUsernameOrPassword
+	}
+	// compare passwords
+	if err := tokens.ComparePasswords(user.Password, request.Password); err != nil {
+		log.Error(err)
+		return Errors.WrongUsernameOrPassword
+	}
+	return context.JSON(http.StatusOK, map[string]interface{}{
+		"user": user.ReturnedUser,
+	})
 }

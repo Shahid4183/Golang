@@ -19,3 +19,9 @@ const ValidationError = Error("Validation Error")
 // InvalidJWTToken - this error is throw when JWT token is invalid or Expired
 // this error will occure when JWT token is expire or invalid
 const InvalidJWTToken = Error("Invalid or Expired JWT token")
+
+// SomethingWentWrong - this error is throw when some unidentified error occurs
+const SomethingWentWrong = Error("Something went wrong, Please try again later.")
+
+// WrongUsernameOrPassword - when password is wrong this error will be returned
+const WrongUsernameOrPassword = Error("Wrong Username Or Password")
